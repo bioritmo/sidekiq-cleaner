@@ -1,9 +1,10 @@
+require 'uri'
+
 module Sidekiq
   module Cleaner
     module WebExtension
       def self.registered(app)
         view_path = File.join(File.expand_path("..", __FILE__), "views")
-
 
         app.post "/cleaner" do
           throw :halt, 404 unless params['key']
@@ -17,7 +18,8 @@ module Sidekiq
               end
             end
           end
-          redirect request.referer
+
+          redirect URI.parse(request.referer).path
         end
 
         app.post "/cleaner/:key" do
@@ -31,7 +33,8 @@ module Sidekiq
               job.delete
             end
           end
-          redirect request.referer
+
+          redirect URI.parse(request.referer).path
         end
 
         app.post "/cleaner/:failure_class/:error_class/:bucket_name/delete" do
@@ -44,7 +47,7 @@ module Sidekiq
             dead_job['job'].delete
           end
 
-          redirect request.url.split("/")[0..-2].join("/") # Redirect back to the original url
+          redirect URI.parse(request.url.split("/")[0..-2].join("/")).path # Redirect back to the original url
         end
 
         app.post "/cleaner/:failure_class/:error_class/:bucket_name/retry" do
@@ -57,7 +60,7 @@ module Sidekiq
             dead_job['job'].retry
           end
 
-          redirect request.url.split("/")[0..-2].join("/") # Redirect back to the original url
+          redirect URI.parse(request.url.split("/")[0..-2].join("/")).path # Redirect back to the original url
         end
 
         app.get "/cleaner/:failure_class/:error_class/:bucket_name" do
